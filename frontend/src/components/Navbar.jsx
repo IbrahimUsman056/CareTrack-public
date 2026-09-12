@@ -12,6 +12,14 @@ const marketingLinks = [
   { href: '/#faq', label: 'FAQ' },
 ];
 
+function navClass({ isActive }) {
+  return `rounded-control px-3 py-2 text-sm font-semibold transition ${
+    isActive
+      ? 'bg-blue-50 text-care-blue'
+      : 'text-ink-muted hover:bg-slate-50 hover:text-navy'
+  }`;
+}
+
 export default function Navbar() {
   const { user, logout } = useAuth();
   const nav = useNavigate();
@@ -29,19 +37,19 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 border-b border-line bg-white/95 backdrop-blur">
-      <div className="ct-container flex h-[4.5rem] items-center justify-between gap-4">
-        <Logo to={user ? (user.role === 'doctor' ? '/doctor' : '/me') : '/'} />
+      <div className="ct-container flex h-[4.25rem] items-center justify-between gap-4">
+        <Logo to="/" showTagline size="md" />
 
         {!user && isLanding && (
           <div className="hidden items-center gap-6 lg:flex">
-            <Link to="/" className="text-sm font-semibold text-ink-muted transition hover:text-care-teal">
+            <Link to="/" className="text-sm font-semibold text-ink-muted transition hover:text-care-blue">
               Home
             </Link>
             {marketingLinks.map((l) => (
               <a
                 key={l.href}
                 href={l.href}
-                className="text-sm font-semibold text-ink-muted transition hover:text-care-teal"
+                className="text-sm font-semibold text-ink-muted transition hover:text-care-blue"
               >
                 {l.label}
               </a>
@@ -54,7 +62,7 @@ export default function Navbar() {
             <>
               <Link
                 to="/login"
-                className="hidden rounded-control px-4 py-2 text-sm font-semibold text-ink-muted transition hover:bg-slate-50 hover:text-care-blue sm:inline-flex"
+                className="rounded-control px-3 py-2 text-sm font-semibold text-ink-muted transition hover:bg-slate-50 hover:text-care-blue sm:px-4"
               >
                 Login
               </Link>
@@ -76,7 +84,7 @@ export default function Navbar() {
           ) : (
             <>
               <div className="hidden items-center gap-2 md:flex">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-care-teal-light font-semibold text-care-teal">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 font-semibold text-care-blue">
                   {user.full_name?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
                 <div className="leading-tight">
@@ -85,26 +93,19 @@ export default function Navbar() {
                 </div>
               </div>
 
+              <Link
+                to="/"
+                className="hidden rounded-control px-3 py-2 text-sm font-semibold text-ink-muted transition hover:bg-slate-50 hover:text-navy sm:inline-flex"
+              >
+                Home
+              </Link>
+
               {user.role === 'doctor' && (
                 <>
-                  <NavLink
-                    to="/doctor"
-                    className={({ isActive }) =>
-                      `rounded-control px-3 py-2 text-sm font-semibold transition ${
-                        isActive ? 'bg-care-teal-light text-care-teal' : 'text-ink-muted hover:bg-slate-50'
-                      }`
-                    }
-                  >
+                  <NavLink to="/doctor" className={navClass}>
                     Dashboard
                   </NavLink>
-                  <NavLink
-                    to="/add-patient"
-                    className={({ isActive }) =>
-                      `hidden rounded-control px-3 py-2 text-sm font-semibold transition sm:inline-flex ${
-                        isActive ? 'bg-care-teal-light text-care-teal' : 'text-ink-muted hover:bg-slate-50'
-                      }`
-                    }
-                  >
+                  <NavLink to="/add-patient" className={({ isActive }) => `${navClass({ isActive })} hidden sm:inline-flex`}>
                     Add Patient
                   </NavLink>
                 </>
@@ -112,24 +113,10 @@ export default function Navbar() {
 
               {user.role === 'patient' && (
                 <>
-                  <NavLink
-                    to="/me"
-                    className={({ isActive }) =>
-                      `rounded-control px-3 py-2 text-sm font-semibold transition ${
-                        isActive ? 'bg-care-teal-light text-care-teal' : 'text-ink-muted hover:bg-slate-50'
-                      }`
-                    }
-                  >
+                  <NavLink to="/me" className={navClass}>
                     My Health
                   </NavLink>
-                  <NavLink
-                    to="/log"
-                    className={({ isActive }) =>
-                      `hidden rounded-control px-3 py-2 text-sm font-semibold transition sm:inline-flex ${
-                        isActive ? 'bg-care-teal-light text-care-teal' : 'text-ink-muted hover:bg-slate-50'
-                      }`
-                    }
-                  >
+                  <NavLink to="/log" className={({ isActive }) => `${navClass({ isActive })} hidden sm:inline-flex`}>
                     Log Reading
                   </NavLink>
                 </>

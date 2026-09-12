@@ -264,7 +264,7 @@ export default function PatientDetail() {
                   onChange={(e) => setApptDate(e.target.value)}
                 />
               </Field>
-              <Button onClick={bookAppt} variant="teal" disabled={!apptDate || busy}>
+              <Button onClick={bookAppt} variant="primary" disabled={!apptDate || busy}>
                 Book appointment
               </Button>
             </div>

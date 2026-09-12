@@ -1,50 +1,27 @@
-import { Link, Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 import Footer from '../components/Footer';
 import { Button, Card, SectionHeading } from '../components/ui';
-import heroImg from '../assets/doctor-patient.jpg';
+import heroImg from '../assets/hero-partner.png';
+import storyImg from '../assets/care-story.jpg';
 
 const features = [
-  {
-    title: 'Patient Profiles',
-    body: 'Condition, medications, follow-up schedule, and test history in one place.',
-    icon: '◫',
-  },
-  {
-    title: 'Medication Reminders',
-    body: 'Keep dosing routines visible so patients stay consistent between visits.',
-    icon: '◷',
-  },
-  {
-    title: 'Checkup Reminders',
-    body: 'Automatic signals as follow-up dates approach or become overdue.',
-    icon: '◎',
-  },
-  {
-    title: 'Health Logging',
-    body: 'Patients record sugar, blood pressure, and weight in a few simple steps.',
-    icon: '⌁',
-  },
-  {
-    title: 'Trend Graphs',
-    body: 'Turn readings into clear charts clinicians can review at a glance.',
-    icon: '◔',
-  },
-  {
-    title: 'Doctor Dashboard',
-    body: 'See who is on track and who needs attention without digging through files.',
-    icon: '▦',
-  },
-  {
-    title: 'Missed Follow-Up Flags',
-    body: 'Overdue checkups and quiet logging periods rise to the top.',
-    icon: '!',
-  },
-  {
-    title: 'Appointment Management',
-    body: 'Request, confirm, reschedule, and cancel visits inside the same workflow.',
-    icon: '◷',
-  },
+  { title: 'Patient Profiles', body: 'Condition, medications, follow-up schedule, and test history in one place.', icon: '◫' },
+  { title: 'Medication Reminders', body: 'Keep dosing routines visible so patients stay consistent between visits.', icon: '◷' },
+  { title: 'Checkup Reminders', body: 'Automatic signals as follow-up dates approach or become overdue.', icon: '◎' },
+  { title: 'Health Logging', body: 'Patients record sugar, blood pressure, and weight in a few simple steps.', icon: '⌁' },
+  { title: 'Trend Graphs', body: 'Turn readings into clear charts clinicians can review at a glance.', icon: '◔' },
+  { title: 'Doctor Dashboard', body: 'See who is on track and who needs attention without digging through files.', icon: '▦' },
+  { title: 'Missed Follow-Up Flags', body: 'Overdue checkups and quiet logging periods rise to the top.', icon: '!' },
+  { title: 'Appointment Management', body: 'Request, confirm, reschedule, and cancel visits inside the same workflow.', icon: '◷' },
+];
+
+const doctorCards = [
+  { title: 'Patient Overview', body: 'See your chronic-care patients in one focused clinic workspace.', icon: '▦', label: 'Dashboard' },
+  { title: 'Follow-Up Flags', body: 'Know which patients need attention before a missed visit becomes a bigger issue.', icon: '!', label: 'Alerts' },
+  { title: 'Health Trends', body: 'Review sugar, blood pressure, and weight changes over time.', icon: '◔', label: 'Monitor' },
+  { title: 'Reminders', body: 'Keep checkup and medication routines visible between visits.', icon: '◷', label: 'Engage' },
+  { title: 'Appointments', body: 'Schedule, confirm, and manage supported follow-up visits.', icon: '◎', label: 'Schedule' },
+  { title: 'Patient Profiles', body: 'Open condition, medication, and follow-up details quickly.', icon: '◫', label: 'Profiles' },
 ];
 
 const steps = [
@@ -58,42 +35,49 @@ const steps = [
 
 const faqs = [
   {
+    q: 'What is CareTrack?',
+    a: 'CareTrack is a clinic patient follow-up and chronic disease management app. It helps clinics keep patients connected between visits with reminders, health logging, trend monitoring, and actionable flags.',
+  },
+  {
     q: 'Who is CareTrack for?',
     a: 'Small clinics and physicians managing chronic conditions like diabetes, hypertension, and asthma — plus their patients who need support between visits.',
   },
   {
-    q: 'What can patients log?',
-    a: 'Patients can log blood sugar, blood pressure (systolic and diastolic), and weight through the patient portal.',
+    q: 'How does CareTrack help doctors?',
+    a: 'Doctors onboard patients, review readings and trends, see who needs attention, send supported reminders, and manage appointments from one dashboard.',
   },
   {
-    q: 'How do doctors know who needs attention?',
-    a: 'The doctor dashboard flags missed follow-ups, high BP or sugar trends, overdue tests, quiet logging periods, and pending appointment requests.',
+    q: 'How do patients log their health readings?',
+    a: 'Patients sign in to the patient portal and log blood sugar, blood pressure, and weight through a simple form. Readings appear in their portal and on the doctor dashboard.',
   },
   {
-    q: 'Does CareTrack replace an EMR?',
-    a: 'No. CareTrack focuses on the follow-up loop between visits — reminders, logging, trends, and actionable flags — without hospital-EMR complexity.',
+    q: 'What can patients track?',
+    a: 'Patients can track blood sugar, blood pressure (systolic and diastolic), weight, medications, reminders, appointments, and personal health trends.',
+  },
+  {
+    q: 'How do reminders work?',
+    a: 'The system supports checkup and medication reminder workflows. Doctors can also trigger supported reminders from a patient profile when follow-up is needed.',
+  },
+  {
+    q: 'How does CareTrack identify patients needing attention?',
+    a: 'The doctor dashboard flags missed follow-ups, high BP or sugar trends, overdue tests, quiet logging periods, and pending appointment requests so clinics can act earlier.',
   },
 ];
 
 export default function Landing() {
-  const { user } = useAuth();
-  if (user) {
-    return <Navigate to={user.role === 'doctor' ? '/doctor' : '/me'} replace />;
-  }
-
   return (
     <div className="bg-white">
       {/* Hero */}
       <section className="overflow-hidden bg-care-cream">
-        <div className="ct-container grid items-center gap-10 py-14 lg:grid-cols-2 lg:gap-12 lg:py-20">
+        <div className="ct-container grid items-start gap-8 pt-6 pb-10 lg:grid-cols-2 lg:gap-12 lg:pt-8 lg:pb-12">
           <div>
             <p className="ct-kicker">Clinic follow-up · Chronic care</p>
-            <h1 className="ct-display mt-3 text-4xl leading-[1.05] sm:text-5xl lg:text-[3.4rem]">
+            <h1 className="ct-display mt-3 text-4xl leading-[1.05] sm:text-5xl lg:text-[3.25rem]">
               Chronic care doesn&apos;t stop when the appointment ends.
             </h1>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-muted sm:text-lg">
-              CareTrack keeps patients connected between visits with reminders, health logging,
-              trend monitoring, and actionable follow-up insights for clinics.
+              CareTrack keeps patients connected between visits through reminders, health logging,
+              trend monitoring, and actionable follow-up visibility for clinics.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button as={Link} to="/register" variant="navy">
@@ -106,27 +90,12 @@ export default function Landing() {
           </div>
 
           <div className="relative">
-            <div className="overflow-hidden rounded-[1.75rem] shadow-soft">
+            <div className="overflow-hidden rounded-[1.75rem] bg-white shadow-soft">
               <img
                 src={heroImg}
-                alt="Doctor reviewing care details with a patient"
-                className="h-[340px] w-full object-cover sm:h-[420px]"
+                alt="Doctor and patient partnership"
+                className="h-auto w-full object-contain object-center"
               />
-            </div>
-
-            <div className="absolute -left-2 top-6 hidden max-w-[200px] rounded-2xl border border-line bg-white p-4 shadow-soft sm:block">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">Patient follow-up</p>
-              <p className="mt-1 font-semibold text-navy">BP logged today</p>
-              <p className="text-xs text-care-teal">124 / 78 mmHg</p>
-            </div>
-
-            <div className="absolute -right-1 bottom-8 max-w-[220px] rounded-2xl border border-line bg-white p-4 shadow-soft">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">CareTrack signal</p>
-              <p className="mt-1 font-semibold text-navy">Medication reminder sent</p>
-              <p className="text-xs text-ink-muted">Follow-up due in 3 days</p>
-              <span className="mt-2 inline-flex rounded-full bg-care-teal-light px-2.5 py-1 text-[10px] font-bold text-care-teal">
-                On track
-              </span>
             </div>
           </div>
         </div>
@@ -143,9 +112,7 @@ export default function Landing() {
           ].map((s, i) => (
             <div
               key={s.label}
-              className={`px-2 text-center md:border-r md:border-white/15 md:px-6 ${
-                i === 3 ? 'md:border-r-0' : ''
-              }`}
+              className={`px-2 text-center md:border-r md:border-white/15 md:px-6 ${i === 3 ? 'md:border-r-0' : ''}`}
             >
               <p className="font-display text-3xl text-white">{s.value}</p>
               <p className="mt-1 text-xs font-medium text-slate-300 sm:text-sm">{s.label}</p>
@@ -154,14 +121,14 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* About */}
+      {/* About / story */}
       <section id="about" className="ct-section bg-white">
         <div className="ct-container grid items-center gap-10 lg:grid-cols-2">
           <div className="overflow-hidden rounded-card shadow-card">
             <img
-              src={heroImg}
-              alt="Clinician and patient in consultation"
-              className="h-[300px] w-full object-cover sm:h-[360px]"
+              src={storyImg}
+              alt="Healthcare professional supporting a patient with continuous care"
+              className="h-[320px] w-full object-cover object-[center_20%] sm:h-[400px]"
             />
           </div>
           <div>
@@ -176,9 +143,9 @@ export default function Landing() {
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {[
-                'Built for small clinics',
+                'Human-centered follow-up',
                 'Clear health trends',
-                'Smart follow-up signals',
+                'Smart attention flags',
                 'Simple patient logging',
               ].map((item) => (
                 <div key={item} className="flex items-center gap-2 text-sm font-semibold text-navy">
@@ -199,13 +166,8 @@ export default function Landing() {
             subtitle="One clean workflow for the clinic team and the patient — from reminders to trends."
           />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {features.map((f, idx) => (
-              <Card
-                key={f.title}
-                className={`p-5 transition hover:-translate-y-0.5 hover:shadow-soft ${
-                  idx % 3 === 0 ? 'lg:col-span-1 bg-white' : 'bg-white'
-                }`}
-              >
+            {features.map((f) => (
+              <Card key={f.title} className="bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-soft">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-care-teal-light text-lg text-care-teal">
                   {f.icon}
                 </div>
@@ -218,7 +180,7 @@ export default function Landing() {
       </section>
 
       {/* Advanced / dark */}
-      <section id="for-doctors" className="ct-section bg-white">
+      <section className="ct-section bg-white">
         <div className="ct-container">
           <div className="rounded-[1.75rem] bg-navy p-8 text-white sm:p-10">
             <div className="grid gap-8 lg:grid-cols-[1.2fr_repeat(5,1fr)] lg:items-start">
@@ -236,9 +198,9 @@ export default function Landing() {
               </div>
               {[
                 { t: 'Health readings', d: 'Sugar, BP, and weight history.' },
-                { t: 'Medication adherence', d: 'Reminder activity stays visible.' },
-                { t: 'Missed follow-ups', d: 'Overdue checkups rise to the top.' },
-                { t: 'Trend changes', d: 'Spot concerning patterns early.' },
+                { t: 'Medication reminders', d: 'Keep routines visible.' },
+                { t: 'Missed follow-ups', d: 'Overdue checkups rise up.' },
+                { t: 'Trend changes', d: 'Spot concerning patterns.' },
                 { t: 'Upcoming appointments', d: 'Keep visits organized.' },
               ].map((item) => (
                 <div key={item.t} className="border-t border-white/10 pt-4 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
@@ -271,64 +233,43 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Doctor experience preview */}
-      <section className="ct-section bg-white">
+      {/* For Doctors */}
+      <section id="for-doctors" className="ct-section bg-white">
         <div className="ct-container">
           <SectionHeading
-            kicker="Doctor experience"
-            title="A dashboard built for follow-up visibility"
-            subtitle="Total patients, attention flags, upcoming visits, and recent readings — designed for action."
+            kicker="For doctors"
+            title="A clinic workspace built for continuous follow-up"
+            subtitle="Polished cards that map to the real CareTrack doctor experience — dashboard, flags, trends, reminders, and appointments."
           />
-          <Card className="overflow-hidden p-0">
-            <div className="border-b border-line bg-slate-50 px-5 py-4 sm:px-6">
-              <p className="text-xs font-bold uppercase tracking-wider text-care-teal">Clinic workspace preview</p>
-              <h3 className="mt-1 font-display text-2xl text-navy">Doctor Dashboard</h3>
-            </div>
-            <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4 sm:p-6">
-              {[
-                ['Total patients', 'Live from your clinic'],
-                ['Needs attention', 'Flagged follow-ups'],
-                ['Missed follow-ups', 'Overdue checkups'],
-                ['Upcoming visits', 'Scheduled & requested'],
-              ].map(([label, hint]) => (
-                <div key={label} className="rounded-2xl border border-line bg-white p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{label}</p>
-                  <p className="mt-2 font-display text-2xl text-navy">—</p>
-                  <p className="mt-1 text-xs font-semibold text-care-teal">{hint}</p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {doctorCards.map((card) => (
+              <Card key={card.title} className="p-5 transition hover:-translate-y-0.5 hover:shadow-soft">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-navy text-white">
+                    {card.icon}
+                  </div>
+                  <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-care-blue">
+                    {card.label}
+                  </span>
                 </div>
-              ))}
-            </div>
-            <div className="grid gap-4 border-t border-line p-5 lg:grid-cols-2 sm:p-6">
-              <div className="rounded-2xl border border-line p-4">
-                <p className="font-semibold text-navy">Patients needing attention</p>
-                <p className="mt-2 text-sm text-ink-muted">
-                  Flags for missed follow-ups, high BP/sugar trends, overdue tests, and pending
-                  appointment requests appear here after you add patients.
-                </p>
-              </div>
-              <div className="rounded-2xl border border-line p-4">
-                <p className="font-semibold text-navy">Quick actions</p>
-                <ul className="mt-2 space-y-2 text-sm text-ink-muted">
-                  <li>• Add a patient profile</li>
-                  <li>• Review trends and send a reminder</li>
-                  <li>• Confirm or schedule appointments</li>
-                </ul>
-              </div>
-            </div>
-            <div className="border-t border-line bg-care-cream px-5 py-4 sm:px-6">
-              <Button as={Link} to="/register" variant="teal">
-                Create clinic account →
-              </Button>
-            </div>
-          </Card>
+                <h3 className="mt-4 text-lg font-bold text-navy">{card.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-ink-muted">{card.body}</p>
+              </Card>
+            ))}
+          </div>
+          <div className="mt-8 text-center">
+            <Button as={Link} to="/register" variant="primary">
+              Create clinic account →
+            </Button>
+          </div>
         </div>
       </section>
 
-      {/* Patient experience */}
+      {/* For Patients */}
       <section id="for-patients" className="ct-section bg-care-cream">
         <div className="ct-container grid items-center gap-10 lg:grid-cols-2">
           <div>
-            <p className="ct-kicker">Patient experience</p>
+            <p className="ct-kicker">For patients</p>
             <h2 className="ct-display mt-2 text-3xl sm:text-4xl">A simpler way to stay on track</h2>
             <p className="mt-4 text-base leading-relaxed text-ink-muted">
               Patients see what matters today — readings, medication reminders, upcoming
@@ -348,6 +289,11 @@ export default function Landing() {
                 </div>
               ))}
             </div>
+            <div className="mt-8">
+              <Button as={Link} to="/login" variant="navy">
+                Patient login →
+              </Button>
+            </div>
           </div>
 
           <div className="rounded-[1.5rem] bg-navy p-4 sm:p-5">
@@ -355,7 +301,7 @@ export default function Landing() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-care-teal">
-                    CareTrack patient portal
+                    Patient portal
                   </p>
                   <h3 className="mt-1 font-display text-2xl text-navy">Your care at a glance</h3>
                 </div>
@@ -378,14 +324,16 @@ export default function Landing() {
               </div>
               <div className="mt-4 border-t border-line pt-4 text-sm">
                 <p className="font-semibold text-navy">Today&apos;s reminder</p>
-                <p className="mt-1 text-ink-muted">Medication and checkup reminders appear after your clinic onboards you.</p>
+                <p className="mt-1 text-ink-muted">
+                  Medication and checkup reminders appear after your clinic onboards you.
+                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Logging / trends */}
+      {/* Trends */}
       <section className="ct-section bg-white">
         <div className="ct-container grid items-center gap-8 lg:grid-cols-2">
           <div>
@@ -397,19 +345,17 @@ export default function Landing() {
             </p>
           </div>
           <Card className="p-6">
-            <p className="text-sm font-semibold text-navy">Trend preview</p>
-            <div className="mt-4 flex h-36 items-end gap-2">
-              {[40, 55, 48, 62, 58, 70, 66].map((h, i) => (
-                <div
-                  key={i}
-                  className="flex-1 rounded-t-lg bg-gradient-to-t from-care-teal to-care-blue/80"
-                  style={{ height: `${h}%` }}
-                  aria-hidden
-                />
+            <p className="text-sm font-semibold text-navy">Monitoring workflow</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              {['Log', 'Monitor', 'Flag'].map((step, i) => (
+                <div key={step} className="rounded-2xl border border-line bg-care-cream/60 p-4 text-center">
+                  <p className="text-xs font-bold text-care-teal">0{i + 1}</p>
+                  <p className="mt-1 font-semibold text-navy">{step}</p>
+                </div>
               ))}
             </div>
             <p className="mt-4 text-xs text-ink-muted">
-              Charts use real patient readings from your CareTrack account — never fabricated medical data.
+              Charts in the app use real patient readings from your CareTrack account — never fabricated medical data.
             </p>
           </Card>
         </div>
@@ -425,8 +371,8 @@ export default function Landing() {
                 Connect your clinic team and patients with one simple follow-up experience.
               </p>
             </div>
-            <Button as={Link} to="/register" variant="teal" className="shrink-0">
-              Create Account →
+            <Button as={Link} to="/register" variant="primary" className="shrink-0">
+              Get Started →
             </Button>
           </div>
         </div>
@@ -443,7 +389,7 @@ export default function Landing() {
           <div className="mx-auto max-w-3xl space-y-3">
             {faqs.map((item) => (
               <details key={item.q} className="group rounded-card border border-line bg-white p-5 open:shadow-card">
-                <summary className="cursor-pointer list-none font-semibold text-navy marker:content-none">
+                <summary className="cursor-pointer list-none font-semibold text-navy">
                   <span className="flex items-center justify-between gap-4">
                     {item.q}
                     <span className="text-care-teal transition group-open:rotate-45">+</span>

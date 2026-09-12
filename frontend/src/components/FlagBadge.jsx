@@ -56,7 +56,7 @@ export default function FlagBadge({ flag }) {
 
 export function StatusBadge({ status = 'on_track' }) {
   const map = {
-    on_track: { label: 'On track', className: 'bg-care-teal-light text-care-teal' },
+    on_track: { label: 'On track', className: 'bg-green-50 text-success' },
     attention: { label: 'Needs attention', className: 'bg-amber-50 text-amber-800' },
     overdue: { label: 'Overdue', className: 'bg-red-50 text-danger' },
     info: { label: 'Informational', className: 'bg-blue-50 text-care-blue' },

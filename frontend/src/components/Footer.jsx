@@ -1,31 +1,82 @@
 import { Link } from 'react-router-dom';
 import Logo from './Logo';
 
+const productLinks = [
+  { href: '/#features', label: 'Features' },
+  { href: '/#how-it-works', label: 'How It Works' },
+  { href: '/#for-doctors', label: 'For Doctors' },
+  { href: '/#for-patients', label: 'For Patients' },
+  { href: '/#faq', label: 'FAQ' },
+];
+
+const infoLinks = [
+  { href: '/#about', label: 'About CareTrack' },
+  { href: 'mailto:support@caretrack.app', label: 'Contact' },
+  { href: 'mailto:support@caretrack.app', label: 'Support' },
+];
+
 export default function Footer() {
   return (
     <footer className="bg-navy text-white">
-      <div className="ct-container py-12">
-        <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
-          <div className="max-w-sm">
-            <Logo to="/" showWordmark={false} className="mb-4 [&_img]:brightness-110" />
-            <p className="text-lg font-semibold">CareTrack</p>
-            <p className="mt-2 text-sm leading-relaxed text-slate-300">
-              Clinic patient follow-up & chronic disease management between visits.
+      <div className="ct-container py-12 sm:py-14">
+        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+          <div>
+            <div className="inline-flex rounded-xl bg-white px-2.5 py-2">
+              <Logo to="/" tone="light" size="md" showTagline={false} />
+            </div>
+            <p className="mt-3 text-[11px] font-semibold tracking-[0.04em] text-slate-300">
+              Better care. Better follow-up.
+            </p>
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-slate-300">
+              Clinic patient follow-up and chronic disease management between visits.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm text-slate-300">
-            <a href="/#features" className="transition hover:text-white">Features</a>
-            <a href="/#how-it-works" className="transition hover:text-white">How It Works</a>
-            <a href="/#for-doctors" className="transition hover:text-white">For Doctors</a>
-            <a href="/#for-patients" className="transition hover:text-white">For Patients</a>
-            <Link to="/login" className="transition hover:text-white">Login</Link>
-            <Link to="/register" className="transition hover:text-white">Get Started</Link>
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-teal-200">Product</p>
+            <ul className="mt-4 space-y-2.5 text-sm text-slate-300">
+              {productLinks.map((l) => (
+                <li key={l.label}>
+                  <a href={l.href} className="transition hover:text-white">
+                    {l.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-teal-200">Information</p>
+            <ul className="mt-4 space-y-2.5 text-sm text-slate-300">
+              {infoLinks.map((l) => (
+                <li key={l.label}>
+                  <a href={l.href} className="transition hover:text-white">
+                    {l.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-teal-200">Account</p>
+            <ul className="mt-4 space-y-2.5 text-sm text-slate-300">
+              <li>
+                <Link to="/login" className="transition hover:text-white">
+                  Login
+                </Link>
+              </li>
+              <li>
+                <Link to="/register" className="transition hover:text-white">
+                  Register
+                </Link>
+              </li>
+            </ul>
           </div>
         </div>
 
         <div className="mt-10 border-t border-white/10 pt-6 text-xs text-slate-400">
-          © {new Date().getFullYear()} CareTrack. Built for continuous chronic care.
+          © 2026 CareTrack. All rights reserved.
         </div>
       </div>
     </footer>

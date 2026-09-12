@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../api/client';
+import api, { getApiErrorMessage } from '../api/client';
 import PatientCard from '../components/PatientCard';
 import { useAuth } from '../context/AuthContext';
 import { Button, Card, EmptyState, LoadingState, StatCard } from '../components/ui';
@@ -15,7 +15,10 @@ export default function DoctorDashboard() {
     api
       .get('/dashboard')
       .then((res) => setPatients(res.data || []))
-      .catch((e) => setError(e.response?.data?.error || 'Failed to load dashboard'))
+      .catch((e) => {
+        console.error('[dashboard]', e);
+        setError(getApiErrorMessage(e, 'Failed to load dashboard'));
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -37,132 +40,153 @@ export default function DoctorDashboard() {
     .slice(0, 6);
 
   const firstName = user?.full_name?.split(' ')[0] || 'Doctor';
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
   return (
-    <div className="ct-container py-8 sm:py-10">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="ct-kicker">Clinic workspace</p>
-          <h1 className="ct-display mt-1 text-3xl sm:text-4xl">Good day, {firstName}</h1>
-          <p className="mt-2 text-sm text-ink-muted">
-            Here&apos;s what needs your attention across chronic-care follow-up.
-          </p>
+    <div className="min-h-[calc(100vh-4.25rem)] bg-slate-50">
+      <div className="ct-container py-8 sm:py-10">
+        <div className="mb-8 flex flex-col gap-4 rounded-[1.5rem] border border-line bg-white p-6 shadow-card sm:flex-row sm:items-end sm:justify-between sm:p-7">
+          <div>
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-care-blue">
+              Clinic workspace
+            </p>
+            <h1 className="ct-display mt-1.5 text-3xl sm:text-4xl">
+              {greeting}, {firstName}
+            </h1>
+            <p className="mt-2 max-w-xl text-sm text-ink-muted">
+              Here&apos;s what needs your attention across chronic-care follow-up.
+            </p>
+          </div>
+          <Button as={Link} to="/add-patient" variant="primary" className="shrink-0">
+            + Add Patient
+          </Button>
         </div>
-        <Button as={Link} to="/add-patient" variant="teal">
-          + Add Patient
-        </Button>
-      </div>
 
-      {error && (
-        <div className="mb-6 rounded-control border border-red-200 bg-red-50 px-4 py-3 text-sm text-danger" role="alert">
-          {error}
+        {error && (
+          <div className="mb-6 rounded-control border border-red-200 bg-red-50 px-4 py-3 text-sm text-danger" role="alert">
+            {error}
+          </div>
+        )}
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard label="Total patients" value={patients.length} hint="In your clinic" />
+          <StatCard
+            label="Needs attention"
+            value={flagged.length}
+            hint={flagged.length ? 'Review flagged patients' : 'All clear right now'}
+            tone={flagged.length ? 'warning' : 'default'}
+          />
+          <StatCard
+            label="Missed follow-ups"
+            value={missed.length}
+            hint="Overdue checkups"
+            tone={missed.length ? 'danger' : 'default'}
+          />
+          <StatCard
+            label="Appointment requests"
+            value={pendingAppts}
+            hint="Awaiting confirmation"
+            tone={pendingAppts ? 'info' : 'default'}
+          />
         </div>
-      )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total patients" value={patients.length} hint="In your clinic" />
-        <StatCard
-          label="Needs attention"
-          value={flagged.length}
-          hint={flagged.length ? 'Review flagged patients' : 'All clear right now'}
-          tone={flagged.length ? 'warning' : 'default'}
-        />
-        <StatCard
-          label="Missed follow-ups"
-          value={missed.length}
-          hint="Overdue checkups"
-          tone={missed.length ? 'danger' : 'default'}
-        />
-        <StatCard
-          label="Appointment requests"
-          value={pendingAppts}
-          hint="Awaiting confirmation"
-          tone={pendingAppts ? 'info' : 'default'}
-        />
-      </div>
+        <div className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_0.8fr]">
+          <div>
+            {flagged.length > 0 && (
+              <section className="mb-8">
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-lg font-bold text-navy">Needs attention</h2>
+                  <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">
+                    {flagged.length} flagged
+                  </span>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {flagged.map((p) => (
+                    <PatientCard key={p.id} patient={p} />
+                  ))}
+                </div>
+              </section>
+            )}
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_0.8fr]">
-        <div>
-          {flagged.length > 0 && (
-            <section className="mb-8">
+            <section>
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-navy">Needs attention</h2>
-                <span className="text-xs font-semibold text-warning">{flagged.length} flagged</span>
+                <h2 className="text-lg font-bold text-navy">On track</h2>
+                <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-success">
+                  {ok.length} patients
+                </span>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {flagged.map((p) => (
-                  <PatientCard key={p.id} patient={p} />
-                ))}
-              </div>
+              {patients.length === 0 ? (
+                <EmptyState
+                  title="No patients yet"
+                  description="Your patient list is ready for your first onboarding."
+                  action={
+                    <Button as={Link} to="/add-patient" variant="primary">
+                      Add your first patient
+                    </Button>
+                  }
+                />
+              ) : ok.length === 0 ? (
+                <EmptyState
+                  title="All patients currently need attention"
+                  description="Review flagged patients above, or onboard someone new."
+                />
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {ok.map((p) => (
+                    <PatientCard key={p.id} patient={p} />
+                  ))}
+                </div>
+              )}
             </section>
-          )}
+          </div>
 
-          <section>
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-navy">On track</h2>
-              <span className="text-xs font-semibold text-care-teal">{ok.length} patients</span>
-            </div>
-            {patients.length === 0 ? (
-              <EmptyState
-                title="No patients yet"
-                description="Onboard your first chronic-care patient to start reminders, logging, and follow-up flags."
-                action={
-                  <Button as={Link} to="/add-patient" variant="navy">
-                    Add your first patient
-                  </Button>
-                }
-              />
-            ) : ok.length === 0 ? (
-              <EmptyState
-                title="No patients currently on track"
-                description="Everyone in your list currently has at least one attention flag."
-              />
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {ok.map((p) => (
-                  <PatientCard key={p.id} patient={p} />
-                ))}
+          <aside className="space-y-4">
+            <Card className="p-5">
+              <h3 className="font-semibold text-navy">Recent health readings</h3>
+              {recentReadings.length === 0 ? (
+                <p className="mt-3 text-sm text-ink-muted">
+                  Readings will appear here once patients start logging.
+                </p>
+              ) : (
+                <ul className="mt-4 space-y-3">
+                  {recentReadings.map((r) => (
+                    <li
+                      key={r.id}
+                      className="flex items-center justify-between gap-3 border-b border-line pb-3 last:border-0 last:pb-0"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-navy">{r.patientName}</p>
+                        <p className="text-xs capitalize text-ink-muted">
+                          {r.type.replace(/_/g, ' ')} · {new Date(r.logged_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <p className="text-sm font-bold text-navy">{r.value}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+
+            <Card className="overflow-hidden border-navy bg-navy p-0 text-white">
+              <div className="p-5">
+                <h3 className="font-semibold">Quick actions</h3>
+                <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                  Workflow: Onboard → Remind → Log → Monitor → Flag → Act
+                </p>
+                <Button as={Link} to="/add-patient" variant="primary" className="mt-4 w-full">
+                  Onboard patient
+                </Button>
+                <Link
+                  to="/"
+                  className="mt-3 block text-center text-xs font-semibold text-slate-300 transition hover:text-white"
+                >
+                  View CareTrack home →
+                </Link>
               </div>
-            )}
-          </section>
+            </Card>
+          </aside>
         </div>
-
-        <aside className="space-y-4">
-          <Card className="p-5">
-            <h3 className="font-semibold text-navy">Recent health readings</h3>
-            {recentReadings.length === 0 ? (
-              <p className="mt-3 text-sm text-ink-muted">
-                Readings will appear here once patients start logging.
-              </p>
-            ) : (
-              <ul className="mt-4 space-y-3">
-                {recentReadings.map((r) => (
-                  <li key={r.id} className="flex items-center justify-between gap-3 border-b border-line pb-3 last:border-0 last:pb-0">
-                    <div>
-                      <p className="text-sm font-semibold text-navy">{r.patientName}</p>
-                      <p className="text-xs capitalize text-ink-muted">
-                        {r.type.replace(/_/g, ' ')} · {new Date(r.logged_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <p className="text-sm font-bold text-navy">{r.value}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-
-          <Card className="bg-navy p-5 text-white">
-            <h3 className="font-semibold">Quick actions</h3>
-            <div className="mt-4 flex flex-col gap-2">
-              <Button as={Link} to="/add-patient" variant="teal" className="w-full">
-                Onboard patient
-              </Button>
-              <p className="text-xs leading-relaxed text-slate-300">
-                Workflow: Onboard → Remind → Log → Monitor → Flag → Act
-              </p>
-            </div>
-          </Card>
-        </aside>
       </div>
     </div>
   );

@@ -52,7 +52,7 @@ export function LoadingState({ label = 'Loading…' }) {
   return (
     <div className="flex min-h-[40vh] items-center justify-center p-8" role="status" aria-live="polite">
       <div className="text-center">
-        <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-care-teal/30 border-t-care-teal" />
+        <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-care-blue/25 border-t-care-blue" />
         <p className="mt-4 text-sm font-medium text-ink-muted">{label}</p>
       </div>
     </div>
@@ -61,10 +61,11 @@ export function LoadingState({ label = 'Loading…' }) {
 
 export function StatCard({ label, value, hint, tone = 'default' }) {
   const tones = {
-    default: 'text-care-teal',
+    default: 'text-care-blue',
     warning: 'text-warning',
     danger: 'text-danger',
     info: 'text-care-blue',
+    success: 'text-success',
   };
   return (
     <Card className="p-5">
@@ -85,7 +86,7 @@ export function HealthMetricCard({ label, value, unit, hint }) {
           <span className="ml-1 text-sm font-sans font-medium text-ink-muted">{unit}</span>
         )}
       </p>
-      {hint && <p className="mt-1 text-xs font-semibold text-care-teal">{hint}</p>}
+      {hint && <p className="mt-1 text-xs font-semibold text-care-blue">{hint}</p>}
     </Card>
   );
 }

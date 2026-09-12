@@ -136,7 +136,7 @@ export default function PatientHome() {
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <StatusBadge status={overdue ? 'overdue' : 'on_track'} />
-          <Button as={Link} to="/log" variant="teal">
+          <Button as={Link} to="/log" variant="primary">
             Log a Reading
           </Button>
         </div>
@@ -234,7 +234,7 @@ export default function PatientHome() {
             ) : (
               <ul className="mt-3 space-y-3">
                 {(profile.medications || []).map((m, i) => (
-                  <li key={i} className="rounded-xl border border-line bg-care-teal-light/40 px-3 py-3 text-sm">
+                  <li key={i} className="rounded-xl border border-line bg-blue-50/60 px-3 py-3 text-sm">
                     <p className="font-semibold text-navy">{m.name}</p>
                     <p className="text-ink-muted">
                       {m.dose} at {(m.times || []).join(', ')}

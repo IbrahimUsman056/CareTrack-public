@@ -118,7 +118,7 @@ export default function LogReading() {
               Date & time are recorded automatically when you save.
             </p>
 
-            <Button type="submit" variant="teal" className="w-full" disabled={loading}>
+            <Button type="submit" variant="primary" className="w-full" disabled={loading}>
               {loading ? 'Saving…' : 'Save reading'}
             </Button>
           </form>
