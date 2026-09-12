@@ -3,7 +3,13 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'https://care-track-public.vercel.app'
+  ]
+}));
 app.use(express.json());
 
 app.use('/api/auth', require('./routes/auth.routes'));
