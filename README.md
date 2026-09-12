@@ -9,7 +9,7 @@ Clinic patient follow-up & chronic disease management app.
 ## 1. Clone the Project
 
 ```bash
-git clone https://github.com/<your-username>/caretrack.git
+git clone https://github.com/IbrahimUsman056/caretrack.git
 cd caretrack
 ```
 
