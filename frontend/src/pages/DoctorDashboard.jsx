@@ -11,6 +11,64 @@ export default function DoctorDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // reminder modal state
+  const [sending, setSending] = useState(false);
+  const [sentMsg, setSentMsg] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [overdue, setOverdue] = useState([]);
+  const [modalError, setModalError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const refresh = async () => {
+    setRefreshing(true);
+    try {
+      const res = await api.get('/dashboard');
+      setPatients(res.data || []);
+    } catch (e) {
+      setError(getApiErrorMessage(e, 'Failed to refresh'));
+    } finally {
+      setRefreshing(false);
+    }
+  };
+  // ── open modal, fetch preview ────────────────
+  const openReminderModal = async () => {
+    setModalOpen(true);
+    setModalLoading(true);
+    setModalError('');
+    setOverdue([]);
+    try {
+      const preview = await api.get('/reminders/overdue-readings');
+      setOverdue(preview.data || []);
+    } catch (e) {
+      setModalError(getApiErrorMessage(e, 'Failed to load overdue patients'));
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setOverdue([]);
+    setModalError('');
+  };
+
+  // ── confirm & send ───────────────────────────
+  const confirmSend = async () => {
+    setSending(true);
+    setModalError('');
+    try {
+      const res = await api.post('/reminders/send-overdue-readings');
+      setSentMsg(`Sent to ${res.data.sent} patient(s).`);
+      setTimeout(() => setSentMsg(''), 3500);
+      closeModal();
+    } catch (e) {
+      setModalError(getApiErrorMessage(e, 'Failed to send reminders'));
+    } finally {
+      setSending(false);
+    }
+  };
+
   useEffect(() => {
     api
       .get('/dashboard')
@@ -61,6 +119,25 @@ export default function DoctorDashboard() {
           <Button as={Link} to="/add-patient" variant="primary" className="shrink-0">
             + Add Patient
           </Button>
+          <button
+            type="button"
+            onClick={refresh}
+            disabled={refreshing}
+            className="rounded-lg border border-line bg-white px-4 py-2 text-sm font-semibold text-navy hover:bg-slate-50 disabled:opacity-50"
+          >
+            {refreshing ? 'Refreshing…' : 'Refresh'}
+          </button>
+        </div>
+
+        <div className="my-4 flex items-center gap-3">
+          <button
+            onClick={openReminderModal}
+            disabled={sending}
+            className="bg-purple-600 text-white px-4 py-2 rounded text-sm disabled:opacity-50"
+          >
+            Remind Patients Missing Readings
+          </button>
+          {sentMsg && <span className="text-sm text-green-700">{sentMsg}</span>}
         </div>
 
         {error && (
@@ -188,6 +265,87 @@ export default function DoctorDashboard() {
           </aside>
         </div>
       </div>
+
+      {/* ── Reminder modal ──────────────────────── */}
+      {modalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={closeModal}
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl bg-white shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="border-b border-line px-6 py-4">
+              <h2 className="text-lg font-bold text-navy">Remind patients missing readings</h2>
+              <p className="mt-1 text-sm text-ink-muted">
+                These patients haven&apos;t logged a reading within their expected window.
+              </p>
+            </div>
+
+            <div className="max-h-80 overflow-y-auto px-6 py-4">
+              {modalLoading && (
+                <p className="text-sm text-ink-muted">Checking patients…</p>
+              )}
+
+              {!modalLoading && modalError && (
+                <div className="rounded-control border border-red-200 bg-red-50 px-4 py-3 text-sm text-danger">
+                  {modalError}
+                </div>
+              )}
+
+              {!modalLoading && !modalError && overdue.length === 0 && (
+                <div className="rounded-control border border-green-200 bg-green-50 px-4 py-3 text-sm text-success">
+                  No patients are overdue on readings.
+                </div>
+              )}
+
+              {!modalLoading && !modalError && overdue.length > 0 && (
+                <ul className="space-y-2">
+                  {overdue.map((p) => (
+                    <li
+                      key={p.patient_id}
+                      className="flex items-center justify-between rounded-xl border border-line px-3 py-2.5"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-navy">{p.full_name}</p>
+                        <p className="text-xs text-ink-muted">{p.phone || 'No phone on file'}</p>
+                      </div>
+                      <span className="text-xs font-semibold text-warning">
+                        {p.days_since_last == null
+                          ? 'No reading yet'
+                          : `${p.days_since_last}d ago`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 border-t border-line px-6 py-4">
+              <button
+                onClick={closeModal}
+                className="rounded-lg px-4 py-2 text-sm font-semibold text-ink-muted hover:bg-slate-100"
+                disabled={sending}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmSend}
+                disabled={
+                  sending ||
+                  modalLoading ||
+                  !!modalError ||
+                  overdue.length === 0
+                }
+                className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {sending ? 'Sending…' : `Send to ${overdue.length} patient(s)`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,10 +6,55 @@ const {
   runReminderScan,
   runMedicationScan,
   runTestScan,
+  runReadingReminderScan,
   markMissedAppointments
 } = require('../services/reminder.service');
 const { requireRole } = require('../middleware/roles');
 const { resolvePatientAccess } = require('../middleware/ownership');
+
+// ─────────────────────────────────────────────
+// STATIC ROUTES FIRST (before /:patientId)
+// ─────────────────────────────────────────────
+
+// Return list of patients who are overdue on readings (doctor preview)
+router.get('/overdue-readings', auth, requireRole('doctor'), async (req, res) => {
+  const { data: patients } = await supabase
+    .from('patients')
+    .select('id, reading_due_days, reading_reminder_sent_at, users!patients_user_id_fkey(full_name, phone)')
+    .eq('doctor_id', req.user.id);
+
+  const now = new Date();
+  const overdue = [];
+
+  for (const p of patients || []) {
+    const dueDays = p.reading_due_days ?? 7;
+
+    const { data: lastReadings } = await supabase
+      .from('readings')
+      .select('logged_at')
+      .eq('patient_id', p.id)
+      .order('logged_at', { ascending: false })
+      .limit(1);
+
+    const lastAt = lastReadings?.[0]?.logged_at ? new Date(lastReadings[0].logged_at) : null;
+    const daysSince = lastAt ? (now - lastAt) / 86400000 : Infinity;
+
+    if (!lastAt || daysSince >= dueDays) {
+      overdue.push({
+        patient_id: p.id,
+        full_name: p.users?.full_name,
+        phone: p.users?.phone,
+        days_since_last: lastAt ? Math.floor(daysSince) : null,
+      });
+    }
+  }
+
+  res.json(overdue);
+});
+
+// ─────────────────────────────────────────────
+// DYNAMIC ROUTES
+// ─────────────────────────────────────────────
 
 // List reminders for a patient
 router.get('/:patientId', auth, async (req, res) => {
@@ -24,6 +69,10 @@ router.get('/:patientId', auth, async (req, res) => {
   res.json(data || []);
 });
 
+// ─────────────────────────────────────────────
+// POST ROUTES
+// ─────────────────────────────────────────────
+
 // Manually trigger one reminder (demo button)
 router.post('/trigger', auth, requireRole('doctor'), async (req, res) => {
   const { patient_id, type, message } = req.body;
@@ -35,7 +84,51 @@ router.post('/trigger', auth, requireRole('doctor'), async (req, res) => {
   res.json(result);
 });
 
-// Force-run each scanner (handy for demo when you don't want to wait for cron)
+// Send reading reminders to all overdue patients for this doctor
+router.post('/send-overdue-readings', auth, requireRole('doctor'), async (req, res) => {
+  const { data: patients } = await supabase
+    .from('patients')
+    .select('id, reading_due_days, reading_reminder_sent_at, users!patients_user_id_fkey(full_name)')
+    .eq('doctor_id', req.user.id);
+
+  const now = new Date();
+  let sent = 0;
+
+  for (const p of patients || []) {
+    const dueDays = p.reading_due_days ?? 7;
+
+    const { data: lastReadings } = await supabase
+      .from('readings')
+      .select('logged_at')
+      .eq('patient_id', p.id)
+      .order('logged_at', { ascending: false })
+      .limit(1);
+
+    const lastAt = lastReadings?.[0]?.logged_at ? new Date(lastReadings[0].logged_at) : null;
+    const daysSince = lastAt ? (now - lastAt) / 86400000 : Infinity;
+
+    if (lastAt && daysSince < dueDays) continue;
+
+    await sendReminder({
+      patient_id: p.id,
+      type: 'reading_reminder',
+      message:
+        `Hi ${p.users?.full_name}, please log your health reading in CareTrack. ` +
+        `Your doctor is waiting to review your progress.`
+    });
+
+    await supabase
+      .from('patients')
+      .update({ reading_reminder_sent_at: now.toISOString() })
+      .eq('id', p.id);
+
+    sent++;
+  }
+
+  res.json({ ok: true, sent });
+});
+
+// Force-run each scanner (handy for demo)
 router.post('/scan/checkups', auth, requireRole('doctor'), async (req, res) => {
   await runReminderScan();
   res.json({ ok: true, scan: 'checkups' });

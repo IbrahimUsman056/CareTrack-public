@@ -56,10 +56,18 @@ router.post('/', auth, requireRole('doctor'), async (req, res) => {
   if (pErr) return res.status(400).json({ error: pErr.message });
 
   // Welcome message (fire-and-forget — don't block response)
+  const welcomeMsg =
+    `Welcome to CareTrack, ${full_name}!\n\n` +
+    `Your doctor has set up your follow-up care.\n\n` +
+    `Login at: https://caretrack.vercel.app\n` +
+    `Email: ${email}\n` +
+    `Password: ${password}\n\n` +
+    `Please log in and change your password soon.`;
+
   sendReminder({
     patient_id: patient.id,
     type: 'welcome',
-    message: `Welcome to CareTrack, ${full_name}! Your doctor will send reminders here.`
+    message: welcomeMsg
   }).catch(e => console.log('[welcome] failed:', e.message));
 
   res.json({ patient, user });
@@ -126,7 +134,40 @@ router.patch('/:id', auth, requireRole('doctor'), async (req, res) => {
   const { id } = req.params;
   const allowed = ['condition', 'medications', 'tests', 'followup_interval_days', 'next_checkup_date'];
   const updates = {};
-  for (const k of allowed) if (k in req.body) updates[k] = req.body[k];
+
+  for (const k of allowed) {
+    if (k in req.body) updates[k] = req.body[k];
+  }
+
+  // Validate tests array
+  if ('tests' in updates) {
+    if (!Array.isArray(updates.tests)) {
+      return res.status(400).json({ error: 'tests must be an array' });
+    }
+    for (const t of updates.tests) {
+      if (!t || typeof t.name !== 'string' || !t.name.trim()) {
+        return res.status(400).json({ error: 'Each test needs a name' });
+      }
+      if (t.due_date && !/^\d{4}-\d{2}-\d{2}$/.test(t.due_date)) {
+        return res.status(400).json({ error: 'due_date must be YYYY-MM-DD' });
+      }
+    }
+  }
+
+  // Validate medications array
+  if ('medications' in updates) {
+    if (!Array.isArray(updates.medications)) {
+      return res.status(400).json({ error: 'medications must be an array' });
+    }
+    for (const m of updates.medications) {
+      if (!m || typeof m.name !== 'string' || !m.name.trim()) {
+        return res.status(400).json({ error: 'Each medication needs a name' });
+      }
+      if (m.times && !Array.isArray(m.times)) {
+        return res.status(400).json({ error: 'medication times must be an array' });
+      }
+    }
+  }
 
   const { data, error } = await supabase
     .from('patients')

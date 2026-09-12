@@ -5,6 +5,7 @@ const {
   runTestScan,
   markMissedAppointments
 } = require('../services/reminder.service');
+const { runReadingReminderScan } = require('../services/reminder.service');
 
 // Checkup scan — every hour
 cron.schedule('0 * * * *', () => {
@@ -24,6 +25,12 @@ cron.schedule('0 */6 * * *', () => {
   runTestScan();
 });
 
+// Every day at 9 AM local — reading reminder scan
+cron.schedule('0 9 * * *', () => {
+  console.log('[cron] reading reminder scan');
+  runReadingReminderScan();
+});
+
 // Missed appointments — every hour at :30
 cron.schedule('30 * * * *', () => {
   console.log('[cron] missed appointment sweep');
@@ -35,6 +42,7 @@ setTimeout(async () => {
   await runReminderScan();
   await runMedicationScan();
   await runTestScan();
+  await runReadingReminderScan();
   await markMissedAppointments();
 }, 5000);
 

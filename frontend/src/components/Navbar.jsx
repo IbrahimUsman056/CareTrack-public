@@ -122,6 +122,7 @@ export default function Navbar() {
                 </>
               )}
 
+              <Link to="/change-password" className="hover:underline">Change password</Link>
               <button
                 type="button"
                 onClick={handleLogout}

@@ -13,6 +13,20 @@ export default function PatientDetail() {
   const [apptDate, setApptDate] = useState('');
   const [busy, setBusy] = useState(false);
 
+  // test form state
+  const [testName, setTestName] = useState('');
+  const [testDue, setTestDue] = useState('');
+  const [testBusy, setTestBusy] = useState(false);
+
+  // reading window state
+  const [readingDays, setReadingDays] = useState('');
+
+  // medication form state
+  const [medName, setMedName] = useState('');
+  const [medDose, setMedDose] = useState('');
+  const [medTimes, setMedTimes] = useState('');
+  const [medBusy, setMedBusy] = useState(false);
+
   const load = () => api.get(`/patients/${id}`).then((r) => setData(r.data));
 
   useEffect(() => {
@@ -28,28 +42,34 @@ export default function PatientDetail() {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (data?.patient) {
+      setReadingDays(String(data.patient.reading_due_days ?? 7));
+    }
+  }, [data]);
+
   const flash = (text, tone = 'success') => {
     setMsg(text);
     setMsgTone(tone);
     setTimeout(() => setMsg(''), 2800);
   };
 
-  const sendReminder = async () => {
-    if (!data) return;
-    setBusy(true);
-    try {
-      await api.post('/reminders/trigger', {
-        patient_id: id,
-        type: 'checkup',
-        message: `Hi ${data.patient.users.full_name}, please book your next checkup.`,
-      });
-      flash('Reminder sent');
-    } catch (e) {
-      flash(e.response?.data?.error || 'Failed to send reminder', 'error');
-    } finally {
-      setBusy(false);
-    }
-  };
+  // const sendReminder = async () => {
+  //   if (!data) return;
+  //   setBusy(true);
+  //   try {
+  //     await api.post('/reminders/trigger', {
+  //       patient_id: id,
+  //       type: 'checkup',
+  //       message: `Hi ${data.patient.users.full_name}, please book your next checkup.`,
+  //     });
+  //     flash('Reminder sent');
+  //   } catch (e) {
+  //     flash(e.response?.data?.error || 'Failed to send reminder', 'error');
+  //   } finally {
+  //     setBusy(false);
+  //   }
+  // };
 
   const bookAppt = async () => {
     if (!apptDate) return;
@@ -90,6 +110,111 @@ export default function PatientDetail() {
     }
   };
 
+  // ── tests ─────────────────────────────────────
+  const addTest = async () => {
+    const name = testName.trim();
+    if (!name) {
+      flash('Test name is required', 'error');
+      return;
+    }
+    setTestBusy(true);
+    try {
+      const existing = data.patient.tests || [];
+      const newTests = [...existing, { name, due_date: testDue || null }];
+      await api.patch(`/patients/${id}`, { tests: newTests });
+      setTestName('');
+      setTestDue('');
+      await load();
+      flash('Test added');
+    } catch (e) {
+      flash(e.response?.data?.error || 'Failed to add test', 'error');
+    } finally {
+      setTestBusy(false);
+    }
+  };
+
+  const removeTest = async (index) => {
+    const existing = data.patient.tests || [];
+    const newTests = existing.filter((_, i) => i !== index);
+    try {
+      await api.patch(`/patients/${id}`, { tests: newTests });
+      await load();
+      flash('Test removed');
+    } catch (e) {
+      flash(e.response?.data?.error || 'Failed to remove test', 'error');
+    }
+  };
+
+  const updateTestDue = async (index, newDue) => {
+    const existing = data.patient.tests || [];
+    const newTests = existing.map((t, i) =>
+      i === index ? { ...t, due_date: newDue || null } : t
+    );
+    try {
+      await api.patch(`/patients/${id}`, { tests: newTests });
+      await load();
+      flash('Due date updated');
+    } catch (e) {
+      flash(e.response?.data?.error || 'Failed to update due date', 'error');
+    }
+  };
+
+  // ── reading window ────────────────────────────
+  const saveReadingDays = async () => {
+    const n = Number(readingDays);
+    if (!Number.isInteger(n) || n < 1 || n > 365) {
+      flash('Enter a whole number between 1 and 365', 'error');
+      return;
+    }
+    try {
+      await api.patch(`/patients/${id}`, { reading_due_days: n });
+      await load();
+      flash('Reading window updated');
+    } catch (e) {
+      flash(e.response?.data?.error || 'Failed to update', 'error');
+    }
+  };
+
+  // ── medications ───────────────────────────────
+  const addMedication = async () => {
+    const name = medName.trim();
+    if (!name) {
+      flash('Medication name is required', 'error');
+      return;
+    }
+    setMedBusy(true);
+    try {
+      const times = medTimes
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const existing = data.patient.medications || [];
+      const newMeds = [...existing, { name, dose: medDose.trim(), times }];
+      await api.patch(`/patients/${id}`, { medications: newMeds });
+      setMedName('');
+      setMedDose('');
+      setMedTimes('');
+      await load();
+      flash('Medication added');
+    } catch (e) {
+      flash(e.response?.data?.error || 'Failed to add medication', 'error');
+    } finally {
+      setMedBusy(false);
+    }
+  };
+
+  const removeMedication = async (index) => {
+    const existing = data.patient.medications || [];
+    const newMeds = existing.filter((_, i) => i !== index);
+    try {
+      await api.patch(`/patients/${id}`, { medications: newMeds });
+      await load();
+      flash('Medication removed');
+    } catch (e) {
+      flash(e.response?.data?.error || 'Failed to remove medication', 'error');
+    }
+  };
+
   if (!data) return <LoadingState label="Loading patient…" />;
 
   const { patient, readings, appointments } = data;
@@ -125,6 +250,8 @@ export default function PatientDetail() {
     return 'text-navy';
   };
 
+  const todayStr = new Date().toISOString().split('T')[0];
+
   return (
     <div className="ct-container py-8 sm:py-10">
       <Link to="/doctor" className="text-sm font-semibold text-care-blue hover:underline">
@@ -144,10 +271,17 @@ export default function PatientDetail() {
             {patient.users.email} · {patient.users.phone}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        {/* <div className="flex flex-wrap items-center gap-3">
           <Button onClick={sendReminder} variant="navy" disabled={busy}>
             Send Reminder
           </Button>
+          {msg && (
+            <span className={`text-sm font-medium ${msgTone === 'error' ? 'text-danger' : 'text-success'}`}>
+              {msg}
+            </span>
+          )}
+        </div> */}
+        <div className="flex flex-wrap items-center gap-3">
           {msg && (
             <span className={`text-sm font-medium ${msgTone === 'error' ? 'text-danger' : 'text-success'}`}>
               {msg}
@@ -198,24 +332,179 @@ export default function PatientDetail() {
         </Card>
 
         <div className="space-y-6">
+          {/* ── Reading reminder window ───────────── */}
+          <Card className="p-5">
+            <h2 className="font-bold text-navy">Reading reminder window</h2>
+            <p className="mt-2 text-sm text-ink-muted">
+              Flag this patient if no reading is logged in this many days.
+            </p>
+            <div className="mt-3 flex items-center gap-2">
+              <input
+                type="number"
+                min="1"
+                max="365"
+                className="ct-input !w-24"
+                value={readingDays}
+                onChange={(e) => setReadingDays(e.target.value)}
+              />
+              <span className="text-sm text-ink-muted">days</span>
+              <button
+                type="button"
+                onClick={saveReadingDays}
+                className="ml-auto rounded-lg bg-care-blue px-3 py-1 text-xs font-semibold text-white"
+              >
+                Save
+              </button>
+            </div>
+          </Card>
+
+          {/* ── Medications (now editable) ────────── */}
           <Card className="p-5">
             <h2 className="font-bold text-navy">Medications</h2>
+
             {(patient.medications || []).length === 0 ? (
-              <p className="mt-3 text-sm text-ink-muted">No medications assigned.</p>
+              <EmptyState title="No medications assigned" description="Add one below." />
             ) : (
-              <ul className="mt-3 space-y-3">
+              <ul className="mt-3 space-y-2">
                 {(patient.medications || []).map((m, i) => (
-                  <li key={i} className="rounded-xl border border-line bg-slate-50 px-3 py-3 text-sm">
-                    <p className="font-semibold text-navy">{m.name}</p>
-                    <p className="text-ink-muted">
-                      {m.dose} · {(m.times || []).join(', ')}
-                    </p>
+                  <li
+                    key={i}
+                    className="flex items-start justify-between gap-3 rounded-xl border border-line bg-slate-50 px-3 py-2.5 text-sm"
+                  >
+                    <div>
+                      <p className="font-semibold text-navy">{m.name}</p>
+                      <p className="text-ink-muted">
+                        {m.dose || '—'} · {(m.times || []).join(', ') || 'no times'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeMedication(i)}
+                      className="text-xs font-semibold text-danger"
+                    >
+                      Remove
+                    </button>
                   </li>
                 ))}
               </ul>
             )}
+
+            <div className="mt-4 border-t border-line pt-4">
+              <p className="mb-2 text-sm font-semibold text-navy">Add a medication</p>
+              <Field id="med-name" label="Name">
+                <input
+                  id="med-name"
+                  type="text"
+                  className="ct-input"
+                  placeholder="e.g. Metformin"
+                  value={medName}
+                  onChange={(e) => setMedName(e.target.value)}
+                />
+              </Field>
+              <Field id="med-dose" label="Dose">
+                <input
+                  id="med-dose"
+                  type="text"
+                  className="ct-input"
+                  placeholder="e.g. 500mg"
+                  value={medDose}
+                  onChange={(e) => setMedDose(e.target.value)}
+                />
+              </Field>
+              <Field id="med-times" label="Times (comma-separated HH:MM)">
+                <input
+                  id="med-times"
+                  type="text"
+                  className="ct-input"
+                  placeholder="e.g. 08:00, 20:00"
+                  value={medTimes}
+                  onChange={(e) => setMedTimes(e.target.value)}
+                />
+              </Field>
+              <Button
+                onClick={addMedication}
+                variant="primary"
+                disabled={!medName.trim() || medBusy}
+              >
+                {medBusy ? 'Adding…' : 'Add medication'}
+              </Button>
+            </div>
           </Card>
 
+          {/* ── Tests ─────────────────────────────── */}
+          <Card className="p-5">
+            <h2 className="font-bold text-navy">Tests</h2>
+
+            {(patient.tests || []).length === 0 ? (
+              <EmptyState title="No tests recorded" description="Add a test below to track it." />
+            ) : (
+              <ul className="mt-3 space-y-2 text-sm">
+                {patient.tests.map((t, i) => {
+                  const overdue = t.due_date && t.due_date < todayStr;
+                  return (
+                    <li
+                      key={i}
+                      className="flex flex-col gap-2 border-b border-line pb-2 last:border-0"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-medium text-navy">{t.name}</span>
+                        {overdue && (
+                          <span className="text-xs font-bold text-danger">OVERDUE</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="date"
+                          className={`ct-input !py-1 !text-xs ${overdue ? '!border-danger' : ''}`}
+                          value={t.due_date || ''}
+                          onChange={(e) => updateTestDue(i, e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeTest(i)}
+                          className="ml-auto text-xs font-semibold text-danger"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
+            <div className="mt-4 border-t border-line pt-4">
+              <p className="mb-2 text-sm font-semibold text-navy">Add a new test</p>
+              <Field id="test-name" label="Test name">
+                <input
+                  id="test-name"
+                  type="text"
+                  className="ct-input"
+                  placeholder="e.g. HbA1c"
+                  value={testName}
+                  onChange={(e) => setTestName(e.target.value)}
+                />
+              </Field>
+              <Field id="test-due" label="Due date">
+                <input
+                  id="test-due"
+                  type="date"
+                  className="ct-input"
+                  value={testDue}
+                  onChange={(e) => setTestDue(e.target.value)}
+                />
+              </Field>
+              <Button
+                onClick={addTest}
+                variant="primary"
+                disabled={!testName.trim() || testBusy}
+              >
+                {testBusy ? 'Adding…' : 'Add test'}
+              </Button>
+            </div>
+          </Card>
+
+          {/* ── Appointments ──────────────────────── */}
           <Card className="p-5">
             <h2 className="font-bold text-navy">Appointments</h2>
             {appointments.length === 0 ? (
@@ -269,20 +558,6 @@ export default function PatientDetail() {
               </Button>
             </div>
           </Card>
-
-          {(patient.tests || []).length > 0 && (
-            <Card className="p-5">
-              <h2 className="font-bold text-navy">Tests</h2>
-              <ul className="mt-3 space-y-2 text-sm">
-                {patient.tests.map((t, i) => (
-                  <li key={i} className="flex justify-between gap-3 border-b border-line pb-2 last:border-0">
-                    <span className="font-medium text-navy">{t.name}</span>
-                    <span className="text-ink-muted">due {t.due_date}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
         </div>
       </div>
     </div>

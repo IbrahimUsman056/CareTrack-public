@@ -5,8 +5,7 @@ import { Button, Card, Field, LoadingState } from '../components/ui';
 
 const TYPES = [
   { value: 'sugar', label: 'Blood sugar', unit: 'mg/dL', hint: 'Typical fasting range varies — enter your meter reading.' },
-  { value: 'bp_sys', label: 'Blood pressure (systolic)', unit: 'mmHg', hint: 'Top number of your BP reading.' },
-  { value: 'bp_dia', label: 'Blood pressure (diastolic)', unit: 'mmHg', hint: 'Bottom number of your BP reading.' },
+  { value: 'bp', label: 'Blood pressure', unit: 'mmHg', hint: 'Enter systolic and diastolic, separated by a slash. E.g. 120/90.' },
   { value: 'weight', label: 'Weight', unit: 'kg', hint: 'Use the same scale when possible.' },
 ];
 
@@ -31,6 +30,48 @@ export default function LogReading() {
     setMsg('');
     if (!profile) return;
 
+    if (type === 'bp') {
+      // Expect "120/90"
+      const raw = value.trim();
+      const parts = raw.split('/').map((s) => s.trim());
+      if (parts.length !== 2 || !parts[0] || !parts[1]) {
+        setError('Enter BP as systolic/diastolic, e.g. 120/90.');
+        return;
+      }
+      const sys = Number(parts[0]);
+      const dia = Number(parts[1]);
+      if (Number.isNaN(sys) || Number.isNaN(dia)) {
+        setError('Both BP values must be numbers.');
+        return;
+      }
+      if (sys <= 0 || dia <= 0) {
+        setError('Both BP values must be greater than zero.');
+        return;
+      }
+      if (dia >= sys) {
+        setError('Diastolic must be lower than systolic.');
+        return;
+      }
+
+      setLoading(true);
+      try {
+        await api.post('/readings', { patient_id: profile.id, type: 'bp_sys', value: sys });
+        await api.post('/readings', { patient_id: profile.id, type: 'bp_dia', value: dia });
+        setMsg('Reading saved successfully.');
+        setValue('');
+        setTimeout(() => {
+          setMsg('');
+          nav('/me');
+        }, 900);
+      } catch (err) {
+        setError(err.response?.data?.error || 'Failed to save reading');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // non-BP types
     const num = Number(value);
     if (value === '' || Number.isNaN(num)) {
       setError('Please enter a valid number.');
@@ -58,6 +99,11 @@ export default function LogReading() {
   };
 
   if (!profile) return <LoadingState label="Preparing logging form…" />;
+
+  const placeholder =
+    type === 'bp' ? 'e.g. 120/90' :
+    type === 'weight' ? 'e.g. 72.5' :
+    'e.g. 110';
 
   return (
     <div className="ct-container py-10">
@@ -90,7 +136,11 @@ export default function LogReading() {
                 id="reading-type"
                 className="ct-input"
                 value={type}
-                onChange={(e) => setType(e.target.value)}
+                onChange={(e) => {
+                  setType(e.target.value);
+                  setValue('');
+                  setError('');
+                }}
               >
                 {TYPES.map((t) => (
                   <option key={t.value} value={t.value}>
@@ -104,10 +154,10 @@ export default function LogReading() {
               <input
                 id="reading-value"
                 className="ct-input text-lg"
-                type="number"
-                step="any"
-                inputMode="decimal"
-                placeholder={`e.g. ${type === 'weight' ? '72.5' : type.startsWith('bp') ? '120' : '110'}`}
+                type={type === 'bp' ? 'text' : 'number'}
+                step={type === 'bp' ? undefined : 'any'}
+                inputMode={type === 'bp' ? 'text' : 'decimal'}
+                placeholder={placeholder}
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 required

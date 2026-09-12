@@ -42,8 +42,8 @@ async function sendReminder({ patient_id, type, message }) {
     try {
       await twilioClient.messages.create({
         body: message,
-        from: process.env.TWILIO_FROM,
-        to: phone
+        from: `whatsapp:${process.env.TWILIO_FROM}`,
+        to: `whatsapp:${phone}`
       });
       await supabase.from('reminders')
         .update({ status: 'sent', sent_at: new Date().toISOString() })
@@ -179,6 +179,67 @@ async function runTestScan() {
 }
 
 // ─────────────────────────────────────────────
+// Scan: patients who haven't logged a reading
+// within their reading_due_days window
+// ─────────────────────────────────────────────
+async function runReadingReminderScan() {
+  const { data: patients } = await supabase
+    .from('patients')
+    .select('id, reading_due_days, reading_reminder_sent_at, users!patients_user_id_fkey(full_name)');
+
+  let count = 0;
+  const now = new Date();
+
+  for (const p of patients || []) {
+    const dueDays = p.reading_due_days ?? 7;
+
+    // Find the most recent reading
+    const { data: lastReadings } = await supabase
+      .from('readings')
+      .select('logged_at')
+      .eq('patient_id', p.id)
+      .order('logged_at', { ascending: false })
+      .limit(1);
+
+    const lastReading = lastReadings?.[0];
+    const lastAt = lastReading ? new Date(lastReading.logged_at) : null;
+
+    // Days since last reading (or since patient creation if none)
+    const baseline = lastAt || now;
+    const daysSince = lastAt
+      ? (now - lastAt) / 86400000
+      : Infinity; // never logged → treat as overdue
+
+    // Skip if within the window
+    if (lastAt && daysSince < dueDays) continue;
+
+    // Dedupe: don't send again within the same due window
+    if (p.reading_reminder_sent_at) {
+      const lastSent = new Date(p.reading_reminder_sent_at);
+      const sinceSent = (now - lastSent) / 86400000;
+      if (sinceSent < dueDays) continue;
+    }
+
+    await sendReminder({
+      patient_id: p.id,
+      type: 'reading_reminder',
+      message:
+        `Hi ${p.users?.full_name}, we haven't received a health reading from you in a while. ` +
+        `Please log your sugar / BP reading in CareTrack.`
+    });
+
+    await supabase
+      .from('patients')
+      .update({ reading_reminder_sent_at: now.toISOString() })
+      .eq('id', p.id);
+
+    count++;
+  }
+
+  console.log(`[cron:reading] sent ${count} reading reminders`);
+}
+
+// ─────────────────────────────────────────────
 // Auto-mark past scheduled appointments as missed
 // ─────────────────────────────────────────────
 async function markMissedAppointments() {
@@ -198,5 +259,6 @@ module.exports = {
   runReminderScan,
   runMedicationScan,
   runTestScan,
+  runReadingReminderScan,
   markMissedAppointments
 };

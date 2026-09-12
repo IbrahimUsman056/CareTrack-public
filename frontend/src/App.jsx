@@ -9,6 +9,7 @@ import AddPatient from './pages/AddPatient';
 import PatientDetail from './pages/PatientDetail';
 import PatientHome from './pages/PatientHome';
 import LogReading from './pages/LogReading';
+import ChangePassword from './pages/ChangePassword';
 
 function Private({ children, role }) {
   const { user } = useAuth();
@@ -91,6 +92,8 @@ export default function App() {
                 </Private>
               }
             />
+            <Route path="/change-password" element={<Private><ChangePassword /></Private>} />
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
